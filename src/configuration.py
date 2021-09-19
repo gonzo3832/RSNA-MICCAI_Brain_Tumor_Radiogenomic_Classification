@@ -10,10 +10,9 @@ import torch.optim as optim
 import torch.utils.data as data
 
 sys.path.insert(0, f'{os.getcwd()}/src')
-'''
-import const
 import datasets
 import criterion
+'''
 '''
 
 def get_device(device: str):
@@ -27,7 +26,6 @@ def get_split(config: dict):
 
 def get_metadata(config: dict):
     ori_path = hydra.utils.get_original_cwd()
-    print(ori_path)
     # hydraが走ってるとこのpath取得
     data_config = config["data"]
     path_train_csv = f'{ori_path}/{data_config["train_df_path"]}'
@@ -39,7 +37,9 @@ def get_metadata(config: dict):
 def get_loader(df: pd.DataFrame,
                datadir,
                config: dict,
-               phase: str):
+               phase: str,
+               MRItype,
+               ):
     dataset_config = config["dataset"]
     name = dataset_config['name']
     loader_config = config["loader"][phase]
@@ -48,7 +48,9 @@ def get_loader(df: pd.DataFrame,
             df,
             datadir=datadir,
             phase=phase,
-            config=dataset_config['params'])
+            MRItype=MRItype,
+            config=dataset_config['params'],
+            )
     loader = data.DataLoader(dataset, **loader_config)
     return loader
 
@@ -59,12 +61,12 @@ def get_criterion(config: dict):
     if (loss_params is None) or (loss_params == ""):
         loss_params = {}
 
-    if hasattr(nn, loss_name):
+    if hasattr(nn, loss_name): # torch.nnに同名のloss関数があったら
         criterion_ = nn.__getattribute__(loss_name)(**loss_params)
-    else:
-        criterion_cls = criterion.__getattribute__(loss_name)
-        if criterion_cls is not None:
-            criterion_ = criterion_cls(**loss_params)
+    else: # ない場合は、自作のcriterion moduleから持ってくる
+        criterion_cls = criterion.__getattribute__(loss_name) # getattrで同名クラスを所得して（インスタンス化はまだ）
+        if criterion_cls is not None: #  
+            criterion_ = criterion_cls(**loss_params) #パラメータ渡してインスタンス化
         else:
             raise NotImplementedError
 

@@ -3,22 +3,22 @@
 # mixup を入れる
 #######################################################
 globals:
-  debug: False
+  debug: True
   comment: test!!!!!
-  seed: 1213
-  device: cuda
+  seed: 42
+  device: cpu
   num_epochs: 45
-  balanced: False
-  remove_short: False
-  mixup: False
+  mri_type: 'all'
+  use_amp: False
   folds:
-    - 0
+    - 5
+    # 回したいホールドを記述。Kfold 5 で、５つとも回したかったら、０、１、２、３、４、
 
 data:
-  train_df_path: input/train_labels.csv
+  train_df_path: input/train_labels_add_imtype.csv
   train_data_path: input/train
-  test_df_path: ./data/external_dataset/birdcall-check/test_audio
-  test_audio_path: ./data/external_dataset/birdcall-check/test.csv
+  test_df_path: 
+  test_audio_path: 
 
 split:
   name: StratifiedKFold
@@ -28,37 +28,32 @@ split:
     shuffle: True
 
 dataset:
-  name: SpectrogramDatasetWithNoise
+  name: DefaultDataset
   params:
-      img_size: 224
-      n_random: 5
-      melspectrogram_parameters:
-        n_mels: 128
-        fmin: 20
-        fmax: 16000
+      MRItype: ['FLAIR','T1w','T1wCE','T2w']
+      num_imgs: 80
+      img_size: 256
+      aug: True
   
 
 loader:
   train:
-    batch_size: 20
+    batch_size: 2
     shuffle: True
-    num_workers: 2
+    num_workers: 0
   valid:
-    batch_size: 10
+    batch_size: 4
     shuffle: False
-    num_workers: 2
+    num_workers: 0
 
 model:
-  name: ResNeSt
+  name: EffNet3D
   params:
-    base_model: 
-    pretrained: True
-    n_classes: 264
+    num_classes: 2
 
 loss:
-  name: BCEWithLogitsLossMod
+  name: BCEWithLogitsLoss
   params:
-
 optimizer:
   name: Adam
   params:
@@ -68,6 +63,10 @@ scheduler:
   name: CosineAnnealingLR
   params:
     T_max: 10
+
+early_stopping:
+  patience: 12
+  delta: 0
 
 hydra:
   run:

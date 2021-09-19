@@ -1,2 +1,7 @@
 input
 notebook
+.devcontainer
+data_ignore
+src/__pycache__
+.DS_Store
+.gitignore
