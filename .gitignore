@@ -1,4 +1,6 @@
-input
+input/efficientnetpyttorch3d
+input/test
+input/train
 .devcontainer
 data_ignore
 src/__pycache__
