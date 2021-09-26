@@ -2,8 +2,7 @@ import os
 import torch
 import torch.nn as nn
 import sys
-pytorch3dpath = "input/efficientnetpyttorch3d/EfficientNet-PyTorch-3D"
-print(os.path.exists(pytorch3dpath))
+pytorch3dpath = "input/EfficientNet-PyTorch-3D"
 sys.path.append(pytorch3dpath)
 from efficientnet_pytorch_3d import EfficientNet3D
 
@@ -17,9 +16,6 @@ def get_model(config):
     # modelのインスタンス化してることになる
     return model
 
-####################################################################
-#     Resnet50
-####################################################################
 class EffNet3D(nn.Module):
     def __init__(self,params):
         super().__init__()

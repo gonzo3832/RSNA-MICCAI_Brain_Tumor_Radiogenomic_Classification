@@ -11,6 +11,9 @@ import subprocess
 from fastprogress import progress_bar
 from omegaconf import DictConfig
 from omegaconf import OmegaConf
+import pandas as pd
+import numpy as np
+
 
 from src import utils
 from src import configuration as C
@@ -18,7 +21,9 @@ from src import models
 from src.early_stopping import EarlyStopping
 from src.train import train
 from src.eval import get_epoch_loss_score
+from src.predict import predict
 import src.result_handler as rh
+import dill
 
 cmd = "git rev-parse --short HEAD"
 hash_ = subprocess.check_output(cmd.split()).strip().decode('utf-8') #subprocessで上のコマンドを実行したのち、結果を格納
@@ -54,12 +59,18 @@ def run (cfg: DictConfig) -> None:
             os.makedirs(output_dir_ignore)
 
     temp_df = df
-    for MRItype in cfg['dataset']['params']['MRItype']:
+    MRItypes = cfg['dataset']['params']['MRItype']
+    model_paths = {}
+    
+    for MRItype in MRItypes:
+        logger.info(f'MRItype : {MRItype}')
         df = temp_df[temp_df[MRItype]].reset_index()
+        
         for fold_i,(trn_idx,val_idx) in enumerate(
             splitter.split(df, y=df['MGMT_value'])
             ):
 
+           
             logger.info('='*30)
             logger.info(f'Fold{fold_i}')
             logger.info('='*30)
@@ -81,8 +92,10 @@ def run (cfg: DictConfig) -> None:
             epochs = []
             best_auc = 0
             best_loss = 0
-            save_path = f'{output_dir_ignore}/{model.__class__.__name__}_MRItype{MRItype}_fold{fold_i}.pth'            
-            early_stopping = EarlyStopping(**cfg['early_stopping'],verbose=True, path=save_path)
+            model_path = f'{output_dir_ignore}/{model.__class__.__name__}_MRItype{MRItype}_fold{fold_i}.pth'
+            model_paths[MRItype] = model_path
+
+            early_stopping = EarlyStopping(**cfg['early_stopping'],verbose=True, path=model_path,device=device)
             n_epoch = cfg['globals']['num_epochs']
             for epoch in progress_bar(range(1,n_epoch+1)):
                 logger.info(f'::: epoch: {epoch}/{n_epoch} :::')
@@ -101,7 +114,7 @@ def run (cfg: DictConfig) -> None:
                 losses_train.append(loss_train)
                 losses_valid.append(loss_valid)
 
-                is_update = early_stopping(loss_valid, model, global_params['debug'])
+                is_update = early_stopping(loss_valid, model, debug=False)
                 if is_update :
                     best_loss = loss_valid
                     best_auc = auc_score_valid
@@ -125,7 +138,7 @@ def run (cfg: DictConfig) -> None:
                 output_dir
             )
             logger.info(f'best_loss: {best_loss:.6f},best_auc_score: {best_auc:.6f}')
-        logger.info('::: success :::\n\n\n')
+        
         del train_loader
         del valid_loader
         del model
@@ -133,6 +146,35 @@ def run (cfg: DictConfig) -> None:
         del scheduler
         gc.collect()
         torch.cuda.empty_cache()
+
+
+    # ToDo : separate train mode and predict mode
+    # dfで行くか、最後に足し算する感じで
+    # fold ごとに行を作成して出力
+
+    dill.dump(model_paths,open('../../../../../model_paths.pkl','wb'))
+    model_paths = dill.load(open('../../../../../model_paths.pkl','rb'))
+    logger.info('::: predict :::')
+
+    test_df, test_data_dir = C.get_metadata_test(cfg)    
+    model = models.get_model(cfg).to(device)
+
+    for MRItype in MRItypes:
+        logger.info(f'MRItype : {MRItype}')
+        test_loader = C.get_loader(test_df, test_data_dir, cfg, 'test', MRItype)
+        preds_sum = np.zeros(len(test_df))
+        n_splits = int(cfg['split']['params']['n_splits'])
+        for fold_i in range(n_splits):
+            model_path = model_paths[MRItype]
+            preds = predict(model.load_state_dict(torch.load(model_path, map_location=device)), device, test_loader)
+            preds_sum += preds
+        preds /= n_splits
+        test_df[MRItype] = preds
+    
+    test_df = utils.ensemble(test_df, 2, 'MGMT_value')
+    test_df.to_csv(os.path.join(output_dir, 'submission.csv'))    
+    
+    logger.info('::: success :::\n\n\n')
 
 if __name__ == "__main__":
     run()

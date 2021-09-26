@@ -29,10 +29,20 @@ def get_metadata(config: dict):
     # hydraが走ってるとこのpath取得
     data_config = config["data"]
     path_train_csv = f'{ori_path}/{data_config["train_df_path"]}'
-    path_data = f'{ori_path}/{data_config["train_data_path"]}'
+    path_data = f'{ori_path}/{data_config["train_data_dir"]}'
 
     train = pd.read_csv(path_train_csv)
     return train, path_data
+
+def get_metadata_test(config: dict):
+    ori_path = hydra.utils.get_original_cwd()
+    # hydraが走ってるとこのpath取得
+    data_config = config["data"]
+    path_test_csv = f'{ori_path}/{data_config["test_df_path"]}'
+    path_data = f'{ori_path}/{data_config["test_data_dir"]}'
+
+    test = pd.read_csv(path_test_csv)
+    return test, path_data
 
 def get_loader(df: pd.DataFrame,
                datadir,

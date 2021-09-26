@@ -1,4 +1,5 @@
 import os
+from pandas.core.frame import DataFrame
 import torch
 import random
 import numpy as np
@@ -18,9 +19,8 @@ def set_seed(seed: int = 42):
         torch.backends.cudnn.benchmark = True  # type: ignore
 
 def get_debug_config(config):
-    config['globals']['num_epochs'] = 3
-    config['split']['params']['n_splits'] = 4
-    config['globals']['folds'] =  [1,]
+    config['globals']['num_epochs'] = 1
+    config['split']['params']['n_splits'] = 2
     return config
 
 
@@ -33,6 +33,26 @@ def get_debug_df(df):
     df_merge['MGMT_value'] = df_merge['MGMT_value'].astype(np.int64)
     df_merge = df_merge.reset_index(drop=True)
     return df_merge
+
+def ensemble(df, n_ignore_columns: int, name_ens_column: str)-> pd.DataFrame:
+    n_ensemble = len(df.columns)-n_ignore_columns
+    df[name_ens_columns] = df[name_ens_columns].astype(np.float64)
+    for index,row in df.iterrows():
+        preds = row[n_ignore_columns:]
+        vote = preds >= 0.5
+        if vote.sum() == n_ensemble/2:
+            if preds[preds >= 0.5].mean() > 1 - preds[preds < 0.5].mean():
+                df.at[index, name_ens_columns] = preds.max()
+            else:
+                df.at[index, name_ens_columns] = preds.min()
+        elif vote.sum() > n_ensemble/2:
+            df.at[index, name_ens_columns] = preds.max()
+        else:
+            df.at[index, name_ens_columns] = preds.min()
+    
+    return df
+
+
 
 def main():
     logger = logging.getLogger(__name__)

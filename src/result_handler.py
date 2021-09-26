@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 def save_loss_figure(fold_i, epochs, losses_train,
-losses_valid, save_dir):
+                        losses_valid, save_dir):
     fig = plt.figure()
     plt.plot(epochs, losses_train, '-x', label = 'train')
     plt.plot(epochs, losses_valid, '-x', label='valid')

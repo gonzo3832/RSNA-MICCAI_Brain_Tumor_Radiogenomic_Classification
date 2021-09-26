@@ -9,16 +9,14 @@ globals:
   device: cpu
   num_epochs: 45
   mri_type: 'all'
-  use_amp: False
-  folds:
-    - 5
-    # 回したいホールドを記述。Kfold 5 で、５つとも回したかったら、０、１、２、３、４、
+  use_amp: True
+
 
 data:
   train_df_path: input/train_labels_add_imtype.csv
-  train_data_path: input/train
-  test_df_path: 
-  test_audio_path: 
+  train_data_dir: input/train
+  test_df_path: input/sample_submission.csv
+  test_data_dir: input/test 
 
 split:
   name: StratifiedKFold
@@ -45,6 +43,11 @@ loader:
     batch_size: 4
     shuffle: False
     num_workers: 0
+  test:
+    batch_size: 4
+    shuffle: False
+    num_workers: 0
+  
 
 model:
   name: EffNet3D
