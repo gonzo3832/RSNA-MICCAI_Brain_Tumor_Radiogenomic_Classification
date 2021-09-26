@@ -4,6 +4,7 @@ input/train
 data_ignore
 data
 src/__pycache__
+ src/__pycache__/utils.cpython-36.pyc
 .DS_Store
 .gitignore
 Dockerfile

@@ -12,9 +12,10 @@ def predict(model, device, test_loader):
     for batch_idx,(data)in enumerate(test_loader):
         data = data.to(device)
         with torch.no_grad():
-            pred = torch.sigmoid(model(data))
-        pred = pred.detach().cpu().numpy()    
-        pred_list.append(pred)
+            temp = [t.numpy() for t in torch.sigmoid(model(data))]
+            #pred = torch.sigmoid(model(data))
+        #pred = pred.detach().cpu().numpy()    
+        pred_list.append(temp[0])
 
 
     
@@ -22,4 +23,4 @@ def predict(model, device, test_loader):
     torch.cuda.empty_cache()
     del data
 
-    return pred_list
+    return np.squeeze(pred_list)

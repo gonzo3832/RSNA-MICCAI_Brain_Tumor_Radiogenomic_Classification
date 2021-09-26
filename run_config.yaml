@@ -3,11 +3,11 @@
 # mixup を入れる
 #######################################################
 globals:
-  debug: True
-  comment: test!!!!!
+  debug: False
+  comment: train,valid batchsize8
   seed: 42
   device: cpu
-  num_epochs: 45
+  num_epochs: 60
   mri_type: 'all'
   use_amp: True
 
@@ -36,15 +36,15 @@ dataset:
 
 loader:
   train:
-    batch_size: 2
+    batch_size: 8
     shuffle: True
     num_workers: 0
   valid:
-    batch_size: 4
+    batch_size: 8
     shuffle: False
     num_workers: 0
   test:
-    batch_size: 4
+    batch_size: 1
     shuffle: False
     num_workers: 0
   

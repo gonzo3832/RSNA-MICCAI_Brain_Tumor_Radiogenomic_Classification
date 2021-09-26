@@ -31,12 +31,7 @@ class EarlyStopping:
         self.path = path
         self.trace_func = trace_func
         self.device = device
-        print(self.device)
-        print(type(self.device))
-        print(self.device == torch.device('cpu'))
-#         self.best_state_dict = {}
     def __call__(self, val_loss, model, debug):
-
         score = -val_loss
 
         is_update = False
@@ -60,25 +55,9 @@ class EarlyStopping:
         if self.verbose:
             self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
         if not debug:
-            print('ok!!!! debug はスルーした')
-            print(self.device)
-            
             if self.device == torch.device('cpu'):
-                print('device : cpu!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
                 torch.save(model.to(self.device).state_dict(), self.path)
-                print(self.path)
-                """
-                torch.save(
-                            {
-                                "model_state_dict": model.state_dict(),
-                            },
-                            self.path,
-                        )
-
-                """
-
             else:
-                print('cpuじゃないらしい')
                 torch.save(model.state_dict(), self.path)
 
         self.val_loss_min = val_loss

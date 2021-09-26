@@ -36,19 +36,19 @@ def get_debug_df(df):
 
 def ensemble(df, n_ignore_columns: int, name_ens_column: str)-> pd.DataFrame:
     n_ensemble = len(df.columns)-n_ignore_columns
-    df[name_ens_columns] = df[name_ens_columns].astype(np.float64)
+    df[name_ens_column] = df[name_ens_column].astype(np.float64)
     for index,row in df.iterrows():
         preds = row[n_ignore_columns:]
         vote = preds >= 0.5
         if vote.sum() == n_ensemble/2:
             if preds[preds >= 0.5].mean() > 1 - preds[preds < 0.5].mean():
-                df.at[index, name_ens_columns] = preds.max()
+                df.at[index, name_ens_column] = preds.max()
             else:
-                df.at[index, name_ens_columns] = preds.min()
+                df.at[index, name_ens_column] = preds.min()
         elif vote.sum() > n_ensemble/2:
-            df.at[index, name_ens_columns] = preds.max()
+            df.at[index, name_ens_column] = preds.max()
         else:
-            df.at[index, name_ens_columns] = preds.min()
+            df.at[index, name_ens_column] = preds.min()
     
     return df
 

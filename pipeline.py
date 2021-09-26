@@ -65,7 +65,7 @@ def run (cfg: DictConfig) -> None:
     for MRItype in MRItypes:
         logger.info(f'MRItype : {MRItype}')
         df = temp_df[temp_df[MRItype]].reset_index()
-        
+        model_paths[MRItype] = {}
         for fold_i,(trn_idx,val_idx) in enumerate(
             splitter.split(df, y=df['MGMT_value'])
             ):
@@ -93,7 +93,7 @@ def run (cfg: DictConfig) -> None:
             best_auc = 0
             best_loss = 0
             model_path = f'{output_dir_ignore}/{model.__class__.__name__}_MRItype{MRItype}_fold{fold_i}.pth'
-            model_paths[MRItype] = model_path
+            model_paths[MRItype][fold_i] = model_path
 
             early_stopping = EarlyStopping(**cfg['early_stopping'],verbose=True, path=model_path,device=device)
             n_epoch = cfg['globals']['num_epochs']
@@ -165,14 +165,17 @@ def run (cfg: DictConfig) -> None:
         preds_sum = np.zeros(len(test_df))
         n_splits = int(cfg['split']['params']['n_splits'])
         for fold_i in range(n_splits):
-            model_path = model_paths[MRItype]
-            preds = predict(model.load_state_dict(torch.load(model_path, map_location=device)), device, test_loader)
+            model_path = model_paths[MRItype][fold_i]
+            model.load_state_dict(torch.load(model_path, map_location=device))
+            preds = predict(model, device, test_loader)
             preds_sum += preds
         preds /= n_splits
         test_df[MRItype] = preds
     
     test_df = utils.ensemble(test_df, 2, 'MGMT_value')
-    test_df.to_csv(os.path.join(output_dir, 'submission.csv'))    
+    test_df.to_csv(os.path.join(output_dir, 'submission.csv'))  
+    test_df.to_csv('submission.csv')
+
     
     logger.info('::: success :::\n\n\n')
     #test
