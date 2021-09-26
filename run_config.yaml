@@ -9,7 +9,7 @@ globals:
   device: cpu
   num_epochs: 60
   mri_type: 'all'
-  use_amp: True
+  use_amp: False
 
 
 data:
@@ -29,7 +29,7 @@ dataset:
   name: DefaultDataset
   params:
       MRItype: ['FLAIR','T1w','T1wCE','T2w']
-      num_imgs: 80
+      num_imgs: 128
       img_size: 256
       aug: True
   
@@ -38,15 +38,15 @@ loader:
   train:
     batch_size: 8
     shuffle: True
-    num_workers: 0
+    num_workers: 8
   valid:
     batch_size: 8
     shuffle: False
-    num_workers: 0
+    num_workers: 8
   test:
     batch_size: 1
     shuffle: False
-    num_workers: 0
+    num_workers: 8
   
 
 model:
@@ -68,7 +68,7 @@ scheduler:
     T_max: 10
 
 early_stopping:
-  patience: 12
+  patience: 6
   delta: 0
 
 hydra:
