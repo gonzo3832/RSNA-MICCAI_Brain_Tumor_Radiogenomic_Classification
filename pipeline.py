@@ -175,6 +175,7 @@ def run (cfg: DictConfig) -> None:
     test_df.to_csv(os.path.join(output_dir, 'submission.csv'))    
     
     logger.info('::: success :::\n\n\n')
+    #test
 
 if __name__ == "__main__":
     run()
