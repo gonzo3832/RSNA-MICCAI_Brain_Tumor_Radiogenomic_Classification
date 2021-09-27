@@ -3,7 +3,6 @@
 import pandas as pd
 import numpy as np
 from pandas.core.frame import DataFrame
-
 def test_ensemble_from_df() -> pd.DataFrame:
     column_names = ['id', 'predict',
                      'A', 'B', 'C', 'D']
