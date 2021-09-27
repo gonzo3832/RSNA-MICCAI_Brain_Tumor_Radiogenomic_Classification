@@ -34,7 +34,6 @@ def _load_dicom_image(path, img_size, voi_lut=True, rotation=0):
     data = cv2.resize(data, (img_size,img_size))
     # アウトプットは　H　* W 
     return data
-
 '''
 import matplotlib.pyplot as plt
 from IPython.display import Image
@@ -59,8 +58,8 @@ def _load_dicom_images_3d(
     # MRI_Type フォルダ内の画像pathを昇順？にソートして取得
     files = sorted(glob.glob(f'{datadir}/{scan_id}/{MRI_Type}/*.*'),
                    key=lambda var:[int(x) if x.isdigit() else x for x in re.findall(r'[^0-9]|[0-9]+', var)])
-    # NOTE: 数字の昇順にsortされると思うが、なぜこれでsortできるかわからない...
-    # NOTE: 数字を返すべきところでfile pathを返しているように思う
+    #　数字の昇順にsortされると思うが、なぜこれでsortできるかわからない...
+    # 数字を返すべきところでfile pathを返しているように思う
     # ---------3D配列生成----------
     middle = len(files)//2
     middle_num_imgs = num_imgs//2
@@ -68,7 +67,7 @@ def _load_dicom_images_3d(
     p2 = min(len(files),middle + middle_num_imgs)
 
     # 総画像の中央から必要枚数分抜き出す
-    # D * H * W * Cから　H * W * D に
+    # D * H *W * Cから　H * W * D に
     img3d = np.stack([_load_dicom_image(f,img_size = img_size,rotation=rotation)for f in files[p1:p2]]).transpose(1,2,0)    
     # 総画像が必要枚数（num_imgs)無かった場合,空の配列で補完
     if img3d.shape[-1] < num_imgs:
