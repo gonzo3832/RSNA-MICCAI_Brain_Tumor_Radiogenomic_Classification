@@ -1,10 +1,13 @@
 import os
+import sys
+
 import torch
 import torch.nn as nn
-import sys
+
+from efficientnet_pytorch_3d import EfficientNet3D
+
 pytorch3dpath = "input/EfficientNet-PyTorch-3D"
 sys.path.append(pytorch3dpath)
-from efficientnet_pytorch_3d import EfficientNet3D
 
 def get_model(config):
     model_config = config["model"]
@@ -12,11 +15,16 @@ def get_model(config):
     model_params = model_config["params"]
 
     model = eval(model_name)(model_params)
-    # eval関数　：　文字列をpythonのコードとして実行する
+    # eval関数 ： 文字列をpythonのコードとして実行する
     # modelのインスタンス化してることになる
     return model
 
 class EffNet3D(nn.Module):
+    """[summary]
+
+    Args:
+        nn ([type]): [description]
+    """    
     def __init__(self,params):
         super().__init__()
         self.net = EfficientNet3D.from_name(

@@ -1,15 +1,31 @@
+# data
 input/test
 input/train
-.devcontainer
+input/EfficientNet-PyTorch-3D
+
+# cache
+src/__pycache__
+src/__pycache__/utils.cpython-36.pyc
+
+# 
 data_ignore
 data
-src/__pycache__
- src/__pycache__/utils.cpython-36.pyc
+
+# 
 .DS_Store
-.gitignore
+# .gitignore
+
+# Docker
 Dockerfile
 docker-compose.yml
+.devcontainer
+
+# pkl
 model_paths.pkl
 session.pkl
 statedict.txt
-input/EfficientNet-PyTorch-3D
+*.pkl
+
+# img
+*.png
+*.jpg

@@ -1,7 +1,5 @@
 import torch.nn as nn
 
-
-
 # 以下、サンプル
 class ResNetLoss(nn.Module):
     def __init__(self, loss_type="ce"):
