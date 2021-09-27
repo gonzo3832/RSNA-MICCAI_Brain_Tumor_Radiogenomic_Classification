@@ -31,6 +31,7 @@ class EarlyStopping:
         self.path = path
         self.trace_func = trace_func
         self.device = device
+        
     def __call__(self, val_loss, model, debug):
         score = -val_loss
 
