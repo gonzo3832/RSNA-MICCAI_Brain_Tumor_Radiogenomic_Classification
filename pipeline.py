@@ -14,7 +14,6 @@ from omegaconf import OmegaConf
 import pandas as pd
 import numpy as np
 
-
 from src import utils
 from src import configuration as C
 from src import models
@@ -26,21 +25,30 @@ import src.result_handler as rh
 import dill
 
 cmd = "git rev-parse --short HEAD"
-hash_ = subprocess.check_output(cmd.split()).strip().decode('utf-8') #subprocessで上のコマンドを実行したのち、結果を格納
+hash_ = subprocess.check_output(cmd.split()).strip().decode('utf-8') # subprocessで上のコマンドを実行したのち、結果を格納
 logger = logging.getLogger(__name__)
 
-@hydra.main(config_name="run_config") #カレントディレクトリの左記ファイルを参照する
+@hydra.main(config_name="run_config") # カレントディレクトリの左記ファイルを参照する
 def run (cfg: DictConfig) -> None:
-    # 自分用メモ①：->はアノテーションで、返り値の型を明示している。別になくても問題ない。
-    # 自分用メモ②：引数の横の：は想定している変数の型を明示している
+    # NOTE: 自分用メモ①：->はアノテーションで、返り値の型を明示している。別になくても問題ない。
+    # NOTE: 自分用メモ②：引数の横の：は想定している変数の型を明示している      
+    """
+    
+    Args:
+        cfg (DictConfig): [description]
+    """    
+
     logger.info('='*30) 
     logger.info('::: pipeline start :::')
     logger.info('='*30)
     logger.info(f'git hash is: {hash_}')
     logger.info(f'all params\n{"="*80}\n{OmegaConf.to_yaml(cfg)}\n{"="*80}')
     comment = cfg['globals']['comment']
-    assert comment!=None, 'commentを入力してください。(globals.commet=hogehoge)'
-    #  assert は条件式がFalseの時に、メッセージを返す。この場合、コメントがない時にメッセージが出る
+
+    # assert は条件式がFalseの時に、メッセージを返す。
+    # この場合、コメントがない時にメッセージが出る    
+    assert comment!= None, 'commentを入力してください。(globals.commet=hogehoge)'
+
     df, datadir = C.get_metadata(cfg)
     if cfg['globals']['debug']:
         logger.info('::: set debug mode :::')
@@ -56,21 +64,22 @@ def run (cfg: DictConfig) -> None:
     output_dir = os.getcwd()
     output_dir_ignore = output_dir.replace('/data/', '/data_ignore/')
     if not os.path.exists(output_dir_ignore):
-            os.makedirs(output_dir_ignore)
+        os.makedirs(output_dir_ignore)
 
     temp_df = df
     MRItypes = cfg['dataset']['params']['MRItype']
     model_paths = {}
     
     for MRItype in MRItypes:
+
         logger.info(f'MRItype : {MRItype}')
         df = temp_df[temp_df[MRItype]].reset_index()
         model_paths[MRItype] = {}
+
         for fold_i,(trn_idx,val_idx) in enumerate(
             splitter.split(df, y=df['MGMT_value'])
             ):
 
-           
             logger.info('='*30)
             logger.info(f'Fold{fold_i}')
             logger.info('='*30)
@@ -79,6 +88,7 @@ def run (cfg: DictConfig) -> None:
             val_df = df.loc[val_idx,:].reset_index(drop=True)
             logger.info(f'trn_df: {trn_df.shape}')
             logger.info(f'val_df: {val_df.shape}')
+
             train_loader = C.get_loader(trn_df,datadir,cfg,'train',MRItype)
             valid_loader = C.get_loader(val_df,datadir,cfg,'valid',MRItype)
         
@@ -92,11 +102,13 @@ def run (cfg: DictConfig) -> None:
             epochs = []
             best_auc = 0
             best_loss = 0
+
             model_path = f'{output_dir_ignore}/{model.__class__.__name__}_MRItype{MRItype}_fold{fold_i}.pth'
             model_paths[MRItype][fold_i] = model_path
 
             early_stopping = EarlyStopping(**cfg['early_stopping'],verbose=True, path=model_path,device=device)
             n_epoch = cfg['globals']['num_epochs']
+
             for epoch in progress_bar(range(1,n_epoch+1)):
                 logger.info(f'::: epoch: {epoch}/{n_epoch} :::')
                 
@@ -108,6 +120,7 @@ def run (cfg: DictConfig) -> None:
                 loss_valid, auc_score_valid = get_epoch_loss_score(
                     model, device, valid_loader, criterion
                 )
+
                 logger.info(f'loss_train: {loss_train:.4f}, loss_valid: {loss_valid:.4f}, auc_score: {auc_score_valid:.4f}')
 
                 epochs.append(epoch)
@@ -128,6 +141,7 @@ def run (cfg: DictConfig) -> None:
                 epochs, losses_train,
                 losses_valid, output_dir
             )
+
             rh.save_result_csv(
                 fold_i,
                 global_params['debug'], 
@@ -137,6 +151,7 @@ def run (cfg: DictConfig) -> None:
                 comment,
                 output_dir
             )
+
             logger.info(f'best_loss: {best_loss:.6f},best_auc_score: {best_auc:.6f}')
         
         del train_loader
@@ -147,9 +162,8 @@ def run (cfg: DictConfig) -> None:
         gc.collect()
         torch.cuda.empty_cache()
 
-
-    # ToDo : separate train mode and predict mode
-    # dfで行くか、最後に足し算する感じで
+    # TODO: separate train mode and predict mode
+    # NOTE: dfで行くか、最後に足し算する感じで
     # fold ごとに行を作成して出力
 
     dill.dump(model_paths,open('../../../../../model_paths.pkl','wb'))

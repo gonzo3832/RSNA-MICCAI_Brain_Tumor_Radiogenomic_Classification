@@ -4,13 +4,30 @@ from torch.cuda.amp import GradScaler, autocast
 import gc
 
 
-def train(model, device, train_loader, optimizer, scheduler, loss_func,use_amp):
+def train(model, device, train_loader, optimizer, scheduler, loss_func, use_amp):
+    """[summary]
+
+    Args:
+        model ([type]): [description]
+        device ([type]): [description]
+        train_loader ([type]): [description]
+        optimizer ([type]): [description]
+        scheduler ([type]): [description]
+        loss_func ([type]): [description]
+        use_amp ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     scaler = GradScaler(enabled=use_amp)
     model.train()
     epoch_train_loss = 0
+
     for batch_idx, (data, target) in enumerate(train_loader):
+        
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
+
         with autocast(enabled=use_amp):
             output = model(data)
             loss = loss_func(output.view_as(target), target)
@@ -21,6 +38,7 @@ def train(model, device, train_loader, optimizer, scheduler, loss_func,use_amp):
 
 
         epoch_train_loss += loss.item()
+        
     scheduler.step()
     loss = epoch_train_loss / len(train_loader)
     
